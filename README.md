@@ -9,6 +9,18 @@ https://www.reddit.com/r/pocketoperators/comments/d1hd9o/deconstructing_po33_bac
 
 ---
 
+Staying organized with backup files:
+
+```
+data/<backup name>/backup.wav
+data/<backup name>/left.raw
+data/<backup name>/right.raw
+data/<backup name>/left.txt
+data/<backup name>/right.txt
+```
+
+---
+
 Backup appears to be 32000Hz, some sort of binary or something.
 
 TE says samples are "8-bit, µ-law companded, 23437.5 Hz samplerate"
@@ -23,3 +35,5 @@ Link dump:
 * https://www.reddit.com/r/pocketoperators/comments/7ybjk2/po33_ko_secret_synth/
 * https://www.youtube.com/watch?v=NmJoW-tiBSM&t=400s
 * https://soniccharge.com/forum/topic/1067-what-are-the-pos-based-off
+* https://www.youtube.com/watch?v=GgIkX_EDFLA
+* https://www.youtube.com/watch?v=2E5V8f7LzZU

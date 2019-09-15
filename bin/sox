@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+__dirname="$(dirname "$( readlink -m "$PWD" )" )"
+
+"$__dirname/../vendor/sox-14.4.2/sox.exe "$@"
