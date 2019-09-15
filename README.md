@@ -23,6 +23,17 @@ data/<backup name>/right.txt
 
 Backup appears to be 32000Hz, some sort of binary or something.
 
+Plotting the delta time between each zero-crossing of a backup file:
+
+![](https://user-images.githubusercontent.com/376504/64572741-a0bdd180-d336-11e9-9e60-d34a9aee6bbe.png)
+
+Shows pretty clear clustering of zero-crossings.  Y axis unit is 48000Hz samples, so 6 samples 48KHz === 4 samples 32KHz
+If each byte is sent via left and right channel and has some sort of parity bit then it makes sense you'd never go more than 4 bytes before a zero-crossing.  
+
+These are wild guesses since I'm not an expert at audio nor EE.
+
+---
+
 TE says samples are "8-bit, µ-law companded, 23437.5 Hz samplerate"
 
 Magnus Lidstrom created PO-32 and PO-35
