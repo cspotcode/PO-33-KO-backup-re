@@ -1,1 +1,2 @@
-export PATH="$PATH:$( pwd )/bin"
+export PATH="$PATH:$( dirname "$( readlink -m "${BASH_SOURCE[0]}" )" )/bin"
+export PATH="$PATH:$( dirname "$( readlink -m "${BASH_SOURCE[0]}" )" )/node_modules/.bin"

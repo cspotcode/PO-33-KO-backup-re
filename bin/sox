@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-__dirname="$(dirname "$( readlink -m "$PWD" )" )"
+__dirname="$(dirname "$( readlink -m "${BASH_SOURCE[0]}" )" )"
 
-"$__dirname/../vendor/sox-14.4.2/sox.exe "$@"
+"$__dirname/../vendor/sox-14.4.2/sox.exe" "$@"

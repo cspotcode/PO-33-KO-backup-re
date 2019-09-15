@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+__dirname="$(dirname "$( readlink -m "${BASH_SOURCE[0]}" )" )"
+__root="$(dirname "$__dirname" )"
+
+. "$__root/config.env"
+
+backupName="$1"
+
+dir="$__root/data/$backupName"
+mkdir -p "$dir"
+
+echo "Recording for $duration seconds, sample rate $sampleRate..."
+sox -t waveaudio -c 2 -r $sampleRate -b 8 "$audioDevice" "$( wslpath -w "$dir" )/backup.wav" trim 0 "$duration"
+#sox -t waveaudio -c 2 -r 48k -b 8 "$audioDevice" "$( wslpath -w "$dir" )/backup.wav" trim 0 "$duration"
+
+echo "Extracting left and right channels..."
+sox "$( wslpath -w "$dir" )/backup.wav" "$( wslpath -w "$dir" )/left.$sampleRate.s8" remix 1
+sox "$( wslpath -w "$dir" )/backup.wav" "$( wslpath -w "$dir" )/right.$sampleRate.s8" remix 2
+
+echo "Done"
