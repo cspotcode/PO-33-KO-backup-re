@@ -13,10 +13,12 @@ const argv = yargs.command('$0', 'Parse raw to bits', {
                 demand: true
             },
             inputPath: {
+                alias: 'input',
                 type: 'string',
                 demand: true
             },
             outputPath: {
+                alias: 'output',
                 type: 'string',
                 demand: true
             }
@@ -53,7 +55,6 @@ function main(opts: {inputPath: string, outputPath: string, sampleRate: number})
     console.log(`Iterating bitstream`);
     let lineLength = 0;
     for(const bit of bitStream) {
-        console.log(`Got bit: ${bit}`);
         fs.writeSync(output, `${bit}`);
         lineLength++;
         if(lineLength === 80) {
