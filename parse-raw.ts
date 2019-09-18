@@ -38,7 +38,7 @@ function main(opts: {inputPath: string, outputPath: string, sampleRate: number})
     const {inputPath, outputPath, sampleRate: audioSampleRateHz} = opts;
     const poEncodingSampleRateHz = 32000;
     const samplesPerBit = audioSampleRateHz / poEncodingSampleRateHz;
-    const maxUncertainty = 1/3;
+    const maxUncertainty = 1/4;
 
     console.log(`Opening input and output files`);
     const output = fs.openSync(outputPath, 'w');
