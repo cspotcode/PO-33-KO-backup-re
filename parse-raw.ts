@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node-to
 import fs from 'fs';
 import assert from 'assert';
+import Path from 'path';
 import __yargs from 'yargs';
 const yargs = require('yargs') as typeof __yargs;
 
@@ -27,6 +28,47 @@ const argv = yargs.command('$0', 'Parse raw to bits', {
     handler(argv) {
         main(argv as any);
     }
+}).command('dump-slice', 'extract a slice of backup as CSV', {
+    builder(yargs) {
+        return yargs.options({
+            sampleRate: {
+                alias: 'r',
+                type: 'number',
+                demand: true
+            },
+            name: {
+                type: 'string',
+                demand: true
+            },
+            start: {
+                type: 'number',
+                demand: true
+            },
+            end: {
+                type: 'number',
+                demand: true
+            }
+        });
+    },
+    handler(argv) {
+        const {name, sampleRate, start, end} = argv as any as {sampleRate: number, name: string, output: string, start: number, end: number};
+        const countBytes = end - start;
+        function readSide(side: 'left' | 'right') {
+            const sideRaw = fs.openSync(Path.join(__dirname, 'data', name, `${side}.${sampleRate}.s8`), 'r');
+            const b = Buffer.alloc(countBytes);
+            fs.readSync(sideRaw, b, 0, countBytes, start);
+            fs.closeSync(sideRaw);
+            return new Int8Array(b);
+        }
+        const left = readSide('left');
+        const right = readSide('right');
+        let acc = '';
+        for(let i = 0; i < countBytes; i++) {
+            acc += `${left[i]}\t${right[i]}\n`;
+        }
+        fs.writeFileSync(Path.join(__dirname, 'data', name, `slice.${start}.${end}.tsv`), acc);
+    }
+
 }).parse();
 
 /**
@@ -202,4 +244,9 @@ function* generateZeroCrossings(generator: Generator<number, void, unknown>): Ge
             }
         }
     }
+}
+
+function dupeGenerator<T, U, V>(generator: Generator<T, U, V>) {
+    // As soon as next() is called on *one* of the outputs, it's passed to the source.
+    // If next() is called again
 }
