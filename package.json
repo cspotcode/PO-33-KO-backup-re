@@ -1,9 +1,10 @@
 {
   "dependencies": {
+    "@cspotcode/speaker": "^0.4.2-node12support",
     "@types/node": "^12.7.5",
     "@types/yargs": "^13.0.2",
     "source-map-support": "^0.5.13",
-    "ts-node": "^8.3.0",
+    "ts-node": "^8.4.1",
     "ts-node-to": "^0.0.3",
     "tslib": "^1.10.0",
     "typescript": "^3.6.3",
