@@ -72,7 +72,7 @@ export function pullXValuesFromGenerator<T>(generator: Generator<T>, count: numb
     return items;
 }
 
-export function generatorUnshift<T>(generator: Generator<T>): T | undefined {
+export function generatorShift<T>(generator: Generator<T>): T | undefined {
     const n = generator.next();
     if(n.done) return;
     return n.value;
@@ -165,13 +165,13 @@ export function buffersToFile(input: Generator<Buffer>, output: number, bufferSi
 }
 
 export function buffersToInt16Arrays(input: Generator<Buffer>, sampleSize = 100): Generator<Int16Array> {
-    return impl(input, sampleSize, Int16Array);
+    return impl(input, sampleSize, Int16Array) as any;
 }
 export function buffersToInt8Arrays(input: Generator<Buffer>, sampleSize = 100): Generator<Int8Array> {
-    return impl(input, sampleSize, Int8Array);
+    return impl(input, sampleSize, Int8Array) as any;
 }
 export function buffersToUint8Arrays(input: Generator<Buffer>, sampleSize = 100): Generator<Uint8Array> {
-    return impl(input, sampleSize, Uint8Array);
+    return impl(input, sampleSize, Uint8Array) as any;
 }
 interface TypedArrayCtor {
     BYTES_PER_ELEMENT: number;
@@ -214,5 +214,11 @@ export function* typedArraysToNumbers(input: Generator<TypedArrayLike>): Generat
         for(const n of ta) {
             yield n;
         }
+    }
+}
+
+export function* generatorMap<T, V>(generator: Generator<T>, cb: (t: T) => V): Generator<V> {
+    for(const item of generator) {
+        yield cb(item);
     }
 }

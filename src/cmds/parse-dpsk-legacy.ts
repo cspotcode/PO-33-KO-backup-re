@@ -1,7 +1,28 @@
+import { Command, Argv } from "../yargs";
 import assert from 'assert';
-import fs, { unwatchFile } from 'fs';
-import { dataPath, generateNumbers, minIndex } from './core';
-import { concatGenerators, arrayToGenerator, noReturn, pullXValuesFromGenerator } from './generator-utils';
+import fs from 'fs';
+import { dataPath, generateNumbers, minIndex } from '../core';
+import { concatGenerators, arrayToGenerator, noReturn, pullXValuesFromGenerator } from '../generator-utils';
+import { Phase, Phases } from "../types-and-constants";
+import { GlobalArgs } from "../cli";
+
+interface Args extends GlobalArgs {
+    name: string;
+    sampleRate: number;
+}
+export const command = Command<Args>({
+    command: 'parse-dpsk-legacy',
+    describe: 'DEPRECATED old, failed method of parsing dpsk',
+    builder(yargs) {
+        return yargs.options({
+            name: {type: 'string', demand: true},
+            sampleRate: {type: 'number', demand: true}
+        });
+    },
+    handler(args) {
+        parseDpskHandler(args as any as {name: string, sampleRate: string});
+    }
+});
 
 const debug = {
     log(this: unknown, ...a: any[]) {},
@@ -57,9 +78,6 @@ function detectFirstPeak(generator: Generator<number>, threshold: number = 50): 
     };
 }
 
-export type Phase = 'A' | 'B' | 'C' | 'D';
-export const phases = ['A', 'B', 'C', 'D'] as const;
-
 const categoryOrder: Array<SampleCategory> = ['ZeroRising', 'High', "ZeroDropping", 'Low', 'ZeroRising', "High"];
 
 function* generatePhases(opts: {
@@ -101,7 +119,7 @@ function* generatePhases(opts: {
                     quarterSampleType === categoryOrder[i + 1] &&
                     halfSampleType === categoryOrder[i + 2]
                 ) {
-                    yield phases[i];
+                    yield Phases[i];
                     break FindPhase;
                 }
             }

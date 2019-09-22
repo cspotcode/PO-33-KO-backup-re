@@ -1,14 +1,21 @@
 {
   "dependencies": {
     "@cspotcode/speaker": "^0.4.2-node12support",
+    "@types/fs-extra": "8",
     "@types/node": "^12.7.5",
     "@types/yargs": "^13.0.2",
+    "fs-extra": "8.1.0",
+    "mic": "2.1.2",
     "source-map-support": "^0.5.13",
     "ts-node": "^8.4.1",
-    "ts-node-to": "^0.0.3",
+    "ts-node-to": "0.0.3",
     "tslib": "^1.10.0",
     "typescript": "^3.6.3",
+    "wav": "1.0.2",
     "wavefile": "^8.4.5",
     "yargs": "^14.0.0"
+  },
+  "scripts": {
+    "cli": "ts-node-to ./src/cli.ts"
   }
 }

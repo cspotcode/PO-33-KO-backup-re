@@ -1,11 +1,18 @@
 import Path from 'path';
 import fs from 'fs';
 
-export function dataPath(name: string, filename: string) {
-    return Path.join(__dirname, '..', 'data', name, filename);
+export function dataPath(name: string, filename?: string) {
+    if(filename == null) {
+        return Path.join(__dirname, '..', 'data', name);
+    } else {
+        return Path.join(__dirname, '..', 'data', name, filename);
+    }
 }
 
-/** emit an input FD one byte at a time */
+/**
+ * emit an input FD one byte at a time
+ * @deprecated
+ */
 export function* generateNumbers(input: number): Generator<number> {
     const inputBuffer = Buffer.alloc(100);
     // const outputBuffer = new Buffer(100);
