@@ -1,77 +1,100 @@
-#!/usr/bin/env ts-node-to
+import { Command } from "../yargs";
 import fs from 'fs';
-import assert from 'assert';
-import __yargs from 'yargs';
-const yargs = require('yargs') as typeof __yargs;
+import { dataPath, generateNumbers } from "../core";
+import { Bit, ZeroCrossing } from "../types-and-constants";
+import { noReturn, arraysEqual, concatGenerators, arrayToGenerator, pullXValuesFromGenerator } from "../generator-utils";
+import { GlobalArgs } from "../cli";
 
-const argv = yargs.command('$0', 'Parse raw to bits', {
-    builder(yargs) {
-        return yargs.options({
-            sampleRate: {
-                alias: 'r',
-                type: 'number',
-                demand: true
-            },
-            inputPath: {
-                alias: 'input',
-                type: 'string',
-                demand: true
-            },
-            outputPath: {
-                alias: 'output',
-                type: 'string',
-                demand: true
-            }
-        });
-    },
-    handler(argv) {
-        main(argv as any);
+interface Args extends GlobalArgs {}
+export const command = Command<Args>({
+    command: 'parse',
+    describe: 'Parse a backup into a phase dump',
+    handler(args) {
+        parsePhasesViaBits(args as unknown as {name: string, sampleRate: number});
     }
-}).parse();
+});
 
 /**
  * Parse a raw file exported from Audacity.
  * Assumes raw file contains signed 8bit PCM, 48000Hz
  */
+function parsePhasesViaBits(opts: {name: string, sampleRate: number}) {
+    const {name, sampleRate} = opts;
+    doIt('left');
+    doIt('right');
+    function doIt(side: 'left' | 'right') {
+        console.log(`Opening input and output files`);
+        const output = fs.openSync(dataPath(name, `${ side }.phases`), 'w');
+        const input = fs.openSync(dataPath(name, `${ side }.${ sampleRate }.s8`), 'r');
 
-function main(opts: {inputPath: string, outputPath: string, sampleRate: number}) {
-    const {inputPath, outputPath, sampleRate: audioSampleRateHz} = opts;
-    const poEncodingSampleRateHz = 32000;
-    const samplesPerBit = audioSampleRateHz / poEncodingSampleRateHz;
-    const maxUncertainty = 1/3;
+        const bitStream = bitSpitter({input: generateNumbers(input), sampleRate});
+        const phaseStream = bitsToPhases({bitStream});
+        
+        let lineLength = 0;
+        for(const phase of phaseStream) {
+            fs.writeSync(output, `${phase}`);
+            lineLength++;
+            if(lineLength === 80) {
+                fs.writeSync(output, '\n');
+                lineLength = 0;
+            }
+        }
+        console.log(`Closing files`);
+        fs.closeSync(input);
+        fs.closeSync(output);
+    }
+}
 
-    console.log(`Opening input and output files`);
-    const output = fs.openSync(outputPath, 'w');
-    const input = fs.openSync(inputPath, 'r');
+function* bitsToPhases(opts: {bitStream: Generator<Bit>}) {
+    const {bitStream} = opts;
+    const bits = new Array<Bit>();
+    // detect the first 11
+    for(const bit of noReturn(bitStream)) {
+        bits.push(bit);
+        if(arraysEqual(bits.slice(-2), [1, 1])) {
+            break;
+        }
+    }
 
-    console.log(`Creating bitstream`);
+    const rest = noReturn(concatGenerators(arrayToGenerator([1]), bitStream));
+    while(true) {
+        const bits = pullXValuesFromGenerator(rest, 2);
+        pullXValuesFromGenerator(rest, 2);
+        if(bits.length < 2) break;
+        const b = ([
+            [[1, 1], 'A'],
+            [[1, 0], 'B'],
+            [[0, 0], 'C'],
+            [[0, 1], 'D']
+        ] as const).find(([signature, phase]) => arraysEqual(bits, signature));
+        if(!b) console.dir({Error: true, bits, b});
+        yield b ? b[1] : '-';
+    }
+}
+
+/**
+ * Take a stream of audio samples and spit out a stream of high/low bits based on zero-crossings of the audio
+ */
+export function bitSpitter(opts: {input: Generator<number>, sampleRate: number}) {
+    const {sampleRate, input} = opts;
+    const poEncodingSampleRateHz = 7800 * 4;
+    const samplesPerBit = sampleRate / poEncodingSampleRateHz;
+    const maxUncertainty = 1/4;
     const bitStream = zeroCrossingsToBits({
         zeroCrossings: generateZeroCrossings(
-            generateNumbers(input)
+            input
         ),
         maxUncertainty,
         samplesPerBit
     });
-    console.log(`Iterating bitstream`);
-    let lineLength = 0;
-    for(const bit of bitStream) {
-        fs.writeSync(output, `${bit}`);
-        lineLength++;
-        if(lineLength === 80) {
-            fs.writeSync(output, '\n');
-            lineLength = 0;
-        }
-    }
-    console.log(`Closing files`);
-    fs.closeSync(input);
-    fs.closeSync(output);
+    return bitStream;
 }
 
 function* zeroCrossingsToBits(opts: {
     zeroCrossings: Generator<ZeroCrossing>,
     maxUncertainty: number,
     samplesPerBit: number
-}): Generator<0 | 1> {
+}): Generator<Bit> {
     const {maxUncertainty, samplesPerBit, zeroCrossings} = opts;
     let skip = 0;
     for(const {side, timestamp, delta} of zeroCrossings) {
@@ -96,45 +119,6 @@ function* zeroCrossingsToBits(opts: {
     }
 }
 
-/** emit an input FD one byte at a time */
-function* generateNumbers(input: number): Generator<number> {
-    const inputBuffer = Buffer.alloc(100);
-    // const outputBuffer = new Buffer(100);
-    while(true) {
-        const length = fs.readSync(input, inputBuffer, 0, 100, null);
-        if(length === 0) break;
-
-        for(const number of new Int8Array(inputBuffer.slice(0, length))) {
-            yield number;
-        }
-    }
-}
-
-/** Read a stream of bits, emitting as bytes */
-function* bitsToBytes(bits: Generator<1 | 0>): Generator<number> {
-    let nextByte = 0;
-    let bitIndex = 7;
-    for(const bit of bits) {
-        assert(bit === 0 || bit === 1);
-        if(bit) {
-            nextByte |= 1<<bitIndex;
-        }
-        if(bitIndex === 0) {
-            yield nextByte;
-            nextByte = 0;
-            bitIndex = 7;
-        } else {
-            bitIndex--;
-        }
-    }
-    yield nextByte;
-}
-
-interface ZeroCrossing {
-    side: 1 | -1;
-    timestamp: number;
-    delta: number;
-}
 function* generateZeroCrossings(generator: Generator<number, void, unknown>): Generator<ZeroCrossing, void, unknown> {
     const threshold = 10;
     let i = -1;

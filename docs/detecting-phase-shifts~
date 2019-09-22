@@ -1,0 +1,27 @@
+Find the first peak's time and amplitude.
+This sets our clock and our general idea of large vs small amplitude.
+
+From there on out, we step forward in 1 cycle blocks, interpreting the block by detecting its phase.
+
+First half of the block / cycle stays in a single phase.
+
+Second half of the block / cycle is used for transition from one phase to another.
+
+Sample 3 points in the cycle: beginning, 1/4 cycle, and 1/2 cycle.
+
+Categorize each sample as:
+    near zero, rising
+    near zero, falling
+    high
+    low
+
+Assert that those 3 points consistently match a given phase.
+For example, `high` then `near zero, falling` then `low` is consistent.
+`high` then `near zero, falling` then `high` is *not* consistent.
+These inconsistencies should only occur during the *second* half of a cycle,
+when phase transitions occur.
+
+If any of the 3 samples are a zero-crossing, find the exact time of zero-crossing.
+Re-adjust our clock accordingly.  This affects the window of the next block.
+Assert that window adjustment never exceeds a sane maximum; if it does, it might mean
+our assumptions are wrong.
